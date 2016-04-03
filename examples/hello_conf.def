@@ -1,0 +1,1 @@
+{property_list,[{reqd,name,{list,{builtin,is_integer}}}]}.
