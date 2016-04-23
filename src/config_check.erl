@@ -5,15 +5,19 @@
 <<"Write etf version of Config file if valid.",
   "Other requirements are: runable as escript">>).
 
+main(["test"]) ->
+    test();
 main([ConfigFile,SchemaFile]) ->
-    DataDef = get_valid_schema(SchemaFile),
-    {ok,Config}  = file:consult(ConfigFile),
+    [DataDef]    = get_valid_schema(SchemaFile),
+    {ok,Config}  = maybe_consult(ConfigFile),
+    io:format("datadef ~p~n",[DataDef]),
+    io:format("config ~p~n",[Config]),
     Result       = term_defs:validate(DataDef,Config),
     write_results(Result,ConfigFile,Config).
 
 write_results(true,ConfigFile,Config) ->
     OutputFile = [ConfigFile,".etf"],
-    EtfData = term_to_binary(Config,[]),
+    EtfData = term_to_binary([Config],[]),
     ok = file:write_file(OutputFile,EtfData);
 
 write_results(false,_,_) ->
@@ -30,19 +34,25 @@ get_valid_schema_by_ext(Ext,SchemaFile) ->
     %% a schema term must be a valid datadef
     %% checking this now is an example of fail fast
     Def = get_term_by_ext(Ext,SchemaFile),
-    true = term_defs:validate({datadef},Def),
+    true = term_defs:validate(datadef,Def),
     Def.
 
 get_term_by_ext(".etf",SchemaFile) ->
-    {ok,Etf} = file:readfile(SchemaFile),
+    {ok,Etf} = file:read_file(SchemaFile),
     binary_to_term(Etf);
 get_term_by_ext(_,SchemaFile) ->
-    {ok,[DataDef]} = file:consult(SchemaFile),
+    {ok,DataDef} = maybe_consult(SchemaFile),
     DataDef.
-    
+
+maybe_consult(Filename) ->    
+    test_consult(file:consult(Filename),Filename).
+test_consult({ok,Value},_) -> 
+    {ok,Value};
+test_consult({error,Reason},Filename) ->
+    throw({error,{Reason,Filename}}).
 
 test() ->
-    DataDef = "{list,{value,valid}}.",
+    DataDef = "{singleton,{value,valid}}.",
     DefFile = "main_test.config_def",
     ok = file:write_file(DefFile,DataDef),
     ok = file:write_file("main_test_valid","valid."),
