@@ -28,6 +28,13 @@
 	     "Key - is an erlang term, normally an atom\n ",
 	     "Specification a datadef that that key value must satisfy.">>).
 
+
+-modification(<< "{{2016-04-28},ajw,"
+	       "Add macro definition.  A macro is or the form {macro,Name :: atom(),DataDef()} ",
+    "A macro is defined in the config, and its DataDef must match the datadef ",
+    "for that part of its definition.  The definition is substituted at runtime ",
+    "and any variable substituted must match DataDef." >>).
+
 validate([Def],Term) ->
     %% When consulting a file, this can add an extra list
     %% this removes it.
@@ -47,6 +54,8 @@ validate(Def,Term,State) ->
     end.
 %maybe_validate([Def],Term,State) ->
 %    validate(Def,Term,State);
+maybe_validate(DataDef,{macro,_Name,DataDef},State) ->
+    {true,State};
 maybe_validate({singleton,DataDef},[Value],State) ->
     validate(DataDef,Value,State);
 maybe_validate({define,Key,Value},_Term,State)  ->
