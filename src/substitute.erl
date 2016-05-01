@@ -32,18 +32,42 @@ macro_sub(Name,Def,SL) ->
 
 test() ->
     String = {list,{builtin,is_integer}},
-    "Hello" = substitute({macro,name,String},[{name,"Hello"}]),
-    ["Hello","Tony"] = 
-	substitute([
+    test(fun substitute/2, 
+	 [{"Hello",[{macro,name,String},[{name,"Hello"}]],true},
+	  {"Hello",[{macro,name,{builtin,is_integer}},[{name,"Hello"}]],invalid},
+	  {["Hello","Tony"],
+	   [[
 		    {macro,hello,String},
 		    {macro,tony,String}],
-		   [{hello,"Hello"},{tony,"Tony"}]),
-    {some_value,"Hello","Tony"} = 
-	substitute({some_value,
+		   [{hello,"Hello"},{tony,"Tony"}]],true},
+	  {{some_value,"Hello","Tony"}, 
+	   [{some_value,
 		    {macro,hello,String},
 		    {macro,tony,String}},
-		   [{hello,"Hello"},{tony,"Tony"}]).
+		   [{hello,"Hello"},{tony,"Tony"}]],true}]).
     
+
+test(F,L) when is_list(L) ->
+    [do_one_test(F,H) || H <- L].
+
+do_one_test(F,T={Def,[Arg1,Arg2],Res}) ->
+    PassFail = mustbe(Res,R2=(catch Def =:= F(Arg1,Arg2))),
+    mr(PassFail,T,R2).
+
+mustbe(invalid,{invalid,_,_,_}) ->
+    pass;
+mustbe(invalid,{'EXIT',_}) ->
+    pass;
+mustbe(true,true) ->
+    pass;
+mustbe(A,B) ->
+    io:format("Expected Resut is ~p~n actual result is ~p~n failed~n~n",[A,B]),
+    fail.
+
+mr(pass,T,_) ->
+    {T,pass};
+mr(fail,T,R) ->
+    {T,R}.
 
 
 

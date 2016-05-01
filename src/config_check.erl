@@ -17,7 +17,7 @@ main([ConfigFile,SchemaFile]) ->
 
 write_results(true,ConfigFile,Config) ->
     OutputFile = [ConfigFile,".etf"],
-    EtfData = term_to_binary([Config],[]),
+    EtfData = term_to_binary(Config,[]),
     ok = file:write_file(OutputFile,EtfData);
 
 write_results(false,_,_) ->

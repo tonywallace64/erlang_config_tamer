@@ -45,7 +45,7 @@ validate(Def,Term)  ->
     {R,_}=validate(Def,Term,dict:new()),
     R.
 validate(Def,Term,State) ->
-    %io:format("validate(~p,~p,~p)~n~n",[Def,Term,State]),
+    %io:format("validate(Def=~p,Term=~p,~p)~n~n",[Def,Term,State]),
     case maybe_validate(Def,Term,State) of
 	{true,NewState} ->
 	    {true,NewState};
@@ -220,10 +220,14 @@ test() ->
 	    {datadef,{match_all,[{define,int,{builtin,is_integer}},int]},true},
 	    {datadef,{options,[{value,male},{builtin,is_integer}]},true},
 	    {{builtin,is_integer},5,true},
+	    {{builtin,is_integer},{macro,age,{builtin,is_integer}},true},
+	    {{builtin,is_integer},{macro,sex,{options,[{value,male},{value,female}]}},invalid},
 	    {{builtin,is_integer},atom,invalid},
 	    {{options,[{value,option1},{value,option2}]},option2,true},
 	    {{options,[{value,option1},{value,option2}]},option3,invalid},
 	    {{options,[{tuple,[{value,rec1}]},{tuple,[{value,rec2}]}]},{rec2},true},
+	    {{options,[{tuple,[{value,rec1}]},{tuple,[{value,rec2}]}]},
+	       {macro,arec,{tuple,[{value,rec2}]}},true},
 	    {{tuple,[{value,employee},{builtin,is_list}]},{employee,"Robert"},true},
 	    {{tuple,[{value,employee},{builtin,is_list}]},{emp,"Robert"},invalid},
 	    {{tuple,[{value,employee},{builtin,is_list}]},{employee,"Robert",male},invalid},
@@ -282,20 +286,3 @@ mr(pass,T,_) ->
     {T,pass};
 mr(fail,T,R) ->
     {T,R}.
-
-dummy() ->
-<<"    
-do_one_test(T={Def,Arg,_R}) ->
-    ExpectedResult = make_result(T),
-    case catch(validate(Def,Arg)) of
-	ExpectedResult -> {T,pass};
-	Failed -> {T,Failed}
-    end.
-
-make_result({_,_,true}) ->
-    true;
-make_result({Def,Arg,invalid}) ->
-    {invalid,Def,Arg,dict:new()};
-make_result({_Def,_Arg,Term}) ->
-    Term.
-">>.
